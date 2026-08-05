@@ -3,6 +3,7 @@ package com.example.finonex_task
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import androidx.core.content.edit
 
 class SecureStorageManager(context: Context) {
     private val masterKey = MasterKey.Builder(context)
@@ -22,6 +23,6 @@ class SecureStorageManager(context: Context) {
     }
 
     fun set(key: String, value: String) {
-        sharedPreferences.edit().putString(key, value).apply()
+        sharedPreferences.edit { putString(key, value) }
     }
 }
