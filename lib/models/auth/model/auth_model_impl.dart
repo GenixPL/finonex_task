@@ -17,6 +17,7 @@ class AuthModelImpl extends AuthModel {
     return _getTokenLock.synchronized(() async {
       final TokenData? storedData = await _authStorage.getToken();
       if (storedData != null && !storedData.isExpired) {
+        print('AuthModelImpl, returning stored token.');
         return storedData.token;
       }
 
@@ -29,6 +30,7 @@ class AuthModelImpl extends AuthModel {
           expiresIn: loginResponse.expiresIn,
         ),
       );
+      print('AuthModelImpl, returning fresh token.');
       return loginResponse.token;
     });
   }
