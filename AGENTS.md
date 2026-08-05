@@ -14,3 +14,6 @@
 
 ## Testing
 - Do not write tests unless asked.
+
+## Dependencies
+- Do not add dependencies without asking.
