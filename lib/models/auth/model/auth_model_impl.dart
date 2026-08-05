@@ -11,6 +11,6 @@ class AuthModelImpl extends AuthModel {
 
   @override
   Future<String?> getToken() async {
-    
+    final TokenData? storedData = await _authStorage.getToken();
   }
 }

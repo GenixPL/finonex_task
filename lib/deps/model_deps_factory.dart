@@ -4,7 +4,13 @@ import 'package:finonex_task/models/_models.dart';
 class ModelDepsFactory {
   static ModelDeps live() {
     return ModelDeps(
-      authModel: AuthModelLive(),
+      authModel: AuthModelImpl(
+        authStorage: AuthStorageInMemory(),
+        authService: AuthService(
+          _httpClient,
+          baseUrl: baseUrl,
+        ),
+      ),
     );
   }
 }
