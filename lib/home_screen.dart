@@ -1,4 +1,5 @@
 import 'package:finonex_task/main.dart';
+import 'package:finonex_task/ui/_ui.dart';
 import 'package:flutter/material.dart';
 
 class MyHomeScreen extends StatelessWidget {
@@ -10,21 +11,17 @@ class MyHomeScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text('Home'),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final token = await modelDeps.authModel.getToken();
+              print(token);
+            },
+            child: Text('login'),
+          ),
+        ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextButton(
-              onPressed: () async {
-                final token = await modelDeps.authModel.getToken();
-                print(token);
-              },
-              child: Text('login'),
-            ),
-          ],
-        ),
-      ),
+      body: const InstrumentsContainer(),
     );
   }
 }
