@@ -6,6 +6,8 @@ class TickerModelImpl extends TickerModel {
   TickerModelImpl({
     required this._service,
   });
+  
+  // TODO(genix): add throttling (if we have given sub it should mark as needing emit and periodic timer should then emit all updates)
 
   final TickerService _service;
 
