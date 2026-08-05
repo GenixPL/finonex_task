@@ -10,14 +10,16 @@ class MyHomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('Home'),
+        leading: const RepaintBoundary(
+          child: ConnectivityIndicator(),
+        ),
         actions: [
           TextButton(
             onPressed: () async {
               final token = await modelDeps.authModel.getToken();
               print(token);
             },
-            child: Text('login'),
+            child: const Text('login'),
           ),
         ],
       ),

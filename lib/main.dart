@@ -2,7 +2,7 @@ import 'package:finonex_task/deps/_deps.dart';
 import 'package:finonex_task/deps/model_deps_factory.dart';
 import 'package:flutter/material.dart';
 
-import 'home_screen.dart';
+import 'ui/home_screen.dart';
 
 late ModelDeps modelDeps;
 
