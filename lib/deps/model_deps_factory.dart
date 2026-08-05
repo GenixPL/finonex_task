@@ -10,8 +10,13 @@ class ModelDepsFactory {
     final String baseUrl = Platform.isAndroid ? 'http://10.0.2.2:8080' : 'http://localhost:8080';
     final Client httpClient = Client();
 
+    final SecureStorage secureStorage = SecureStorageLocal();
+
     final authModel = AuthModelImpl(
-      authStorage: AuthStorageInMemory(),
+      // authStorage: AuthStorageInMemory(),
+      authStorage: AuthStorageSecure(
+        secureStorage: secureStorage,
+      ),
       authService: AuthService(
         httpClient,
         baseUrl: baseUrl,
