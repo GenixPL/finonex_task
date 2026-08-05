@@ -1,14 +1,8 @@
+import 'package:finonex_task/main.dart';
 import 'package:flutter/material.dart';
 
-class MyHomeScreen extends StatefulWidget {
+class MyHomeScreen extends StatelessWidget {
   const MyHomeScreen({super.key});
-
-  @override
-  State<MyHomeScreen> createState() => _MyHomeScreenState();
-}
-
-class _MyHomeScreenState extends State<MyHomeScreen> {
-  int _counter = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -21,25 +15,16 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+            TextButton(
+              onPressed: () async {
+                final token = await modelDeps.authModel.getToken();
+                print(token);
+              },
+              child: Text('login'),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
     );
-  }
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
   }
 }
