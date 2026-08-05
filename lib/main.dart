@@ -9,6 +9,8 @@ late ModelDeps modelDeps;
 void main() {
   final RunMode runMode = RunMode.live;
 
+  WidgetsFlutterBinding.ensureInitialized();
+
   modelDeps = switch (runMode) {
     RunMode.live => ModelDepsFactory.live(),
   };

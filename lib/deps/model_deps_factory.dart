@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:finonex_task/deps/_deps.dart';
 import 'package:finonex_task/models/_models.dart';
+import 'package:finonex_task/services/_services.dart';
 import 'package:http/http.dart';
 
 class ModelDepsFactory {
@@ -31,6 +32,9 @@ class ModelDepsFactory {
         service: InstrumentServiceFake(),
       ),
       tickerModel: tickerModel,
+      connectivityModel: ConnectivityModel(
+        service: ConnectivityServiceImpl(),
+      ),
     );
   }
 }
