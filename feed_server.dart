@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+int _tokenExpiryInSec = 10;
+
 class Instrument {
   final String symbol;
   final String name;
@@ -195,10 +197,10 @@ class FeedServer {
         return;
       }
       final token = List.generate(32, (_) => rng.nextInt(16).toRadixString(16)).join();
-      tokens[token] = DateTime.now().add(const Duration(seconds: 60));
+      tokens[token] = DateTime.now().add(Duration(seconds: _tokenExpiryInSec));
       req.response
         ..headers.contentType = ContentType.json
-        ..write(jsonEncode({'token': token, 'expiresIn': 60}))
+        ..write(jsonEncode({'token': token, 'expiresIn': _tokenExpiryInSec}))
         ..close();
     } catch (_) {
       try {
