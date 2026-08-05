@@ -44,7 +44,7 @@ class _InstrumentsContainerState extends State<InstrumentsContainer> {
         final instrument = instruments[index];
 
         return RepaintBoundary(
-          child: InstrumentWidget(data: instrument),
+          child: InstrumentWidget(instrumentData: instrument),
         );
       },
     );

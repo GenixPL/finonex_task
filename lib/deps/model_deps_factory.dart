@@ -6,19 +6,31 @@ import 'package:http/http.dart';
 
 class ModelDepsFactory {
   static ModelDeps live() {
-    return ModelDeps(
-      authModel: AuthModelImpl(
-        authStorage: AuthStorageInMemory(),
-        authService: AuthService(
-          Client(),
-          // http://localhost:8080
-          baseUrl: Platform.isAndroid ? 'http://10.0.2.2:8080' : throw UnsupportedError('wrong platform'),
-        ),
+    final String baseUrl = Platform.isAndroid ? 'http://10.0.2.2:8080' : 'http://localhost:8080';
+    final Client httpClient = Client();
+
+    final authModel = AuthModelImpl(
+      authStorage: AuthStorageInMemory(),
+      authService: AuthService(
+        httpClient,
+        baseUrl: baseUrl,
       ),
+    );
+
+    final tickerModel = TickerModelImpl(
+      service: TickerService(
+        client: httpClient,
+        baseUrl: baseUrl,
+        authModel: authModel,
+      ),
+    );
+
+    return ModelDeps(
+      authModel: authModel,
       instrumentModel: InstrumentModelImpl(
         service: InstrumentServiceFake(),
       ),
-      tickerModel: TickerModelImpl(),
+      tickerModel: tickerModel,
     );
   }
 }
