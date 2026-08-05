@@ -33,7 +33,7 @@ class ModelDepsFactory {
       ),
       tickerModel: tickerModel,
       connectivityModel: ConnectivityModel(
-        service: ConnectivityServiceImpl(),
+        service: ConnectivityServiceLocal(),
       ),
     );
   }

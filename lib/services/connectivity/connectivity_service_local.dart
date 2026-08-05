@@ -5,8 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:rxdart/rxdart.dart';
 
 // TODO(genix): we could make it check if we actually can reach the internet instead of just having wifi/cellular on
-class ConnectivityServiceImpl extends ConnectivityService {
-  ConnectivityServiceImpl() {
+class ConnectivityServiceLocal extends ConnectivityService {
+  ConnectivityServiceLocal() {
     _init();
   }
 
