@@ -1,4 +1,3 @@
-import 'package:finonex_task/main.dart';
 import 'package:finonex_task/ui/auth_widget/auth_widget.dart';
 import 'package:finonex_task/ui/connectivity_indicator/connectivity_indicator.dart';
 import 'package:finonex_task/ui/instrument_container/instrument_container.dart';

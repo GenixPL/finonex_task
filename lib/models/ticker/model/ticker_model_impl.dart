@@ -1,3 +1,5 @@
+// ignore_for_file: close_sinks
+
 import 'dart:async';
 
 import 'package:finonex_task/models/auth/_auth.dart';
@@ -38,10 +40,10 @@ class TickerModelImpl extends TickerModel {
   Timer? _stalledTimer;
 
   StreamSubscription<TickerEvent>? _serviceSubscription;
-  Map<String, BehaviorSubject<TickerData>> _tickerStreams = {};
+  final Map<String, BehaviorSubject<TickerData>> _tickerStreams = {};
 
   Timer? _bufferTimer;
-  Map<String, TickerData> _buffer = {};
+  final Map<String, TickerData> _buffer = {};
 
   // endregion
 
@@ -105,12 +107,12 @@ class TickerModelImpl extends TickerModel {
       _serviceSubscription = stream.listen(
         (event) {
           switch (event) {
-            case TickerTickEvent(event):
+            case TickerTickEvent tickEvent:
               if (_connectionStream.value != TickerConnectionState.live) {
                 _connectionStream.add(TickerConnectionState.live);
               }
               _setStalledTimer();
-              _handleTickEvent(event);
+              _handleTickEvent(tickEvent);
 
             case TickerPingEvent():
               print('ping, resetting stalled timer');
@@ -118,6 +120,7 @@ class TickerModelImpl extends TickerModel {
 
             case TickerGapEvent(resumeFrom: final resumeFrom):
               print('Gap in stream, resume from $resumeFrom');
+              // TODO(genix): handle
 
             case TickerUnknownEvent(event: final eventName, data: final data):
               print('Unknown event: $eventName, data: $data');
@@ -133,7 +136,21 @@ class TickerModelImpl extends TickerModel {
   }
 
   void _handleTickEvent(TickerTickEvent event) {
-    _buffer[event.data.symbol] = event.data;
+    final incomingData = event.data;
+    final symbol = incomingData.symbol;
+
+    final bufferedData = _buffer[symbol];
+    if (bufferedData != null && bufferedData.timestamp >= incomingData.timestamp) {
+      return;
+    }
+
+    // TODO(genix): needed?
+    final stream = _tickerStreams[symbol];
+    if (stream != null && stream.hasValue && stream.value.timestamp >= incomingData.timestamp) {
+      return;
+    }
+
+    _buffer[symbol] = incomingData;
   }
 
   Future<void> _stopStreaming() async {
