@@ -47,16 +47,7 @@ class TickerModelImpl extends TickerModel {
   // region Public
 
   @override
-  Stream<TickerData> getTickerStream(String symbol) {
-    final BehaviorSubject<TickerData>? stream = _tickerStreams[symbol];
-    if (stream != null) {
-      return stream.stream;
-    }
-
-    final BehaviorSubject<TickerData> newStream = BehaviorSubject();
-    _tickerStreams[symbol] = newStream;
-    return newStream.stream;
-  }
+  Stream<TickerData> getTickerStream(String symbol) => _getTickerStream(symbol);
 
   @override
   ValueStream<TickerConnectionState> get connectionStream => _connectionStream.stream;
@@ -130,10 +121,21 @@ class TickerModelImpl extends TickerModel {
   }
 
   Future<void> _flushBuffer() async {
+    if (_buffer.isNotEmpty) {
+      final updates = Map<String, TickerData>.from(_buffer);
+      _buffer.clear();
 
+      for (final entry in updates.entries) {
+        _getTickerStream(entry.key).add(entry.value);
+      }
+    }
+
+    _setBufferTimer();
   }
 
   Future<void> _markStalled() async {
+    print('marking stalled');
+
     _connectionStream.add(TickerConnectionState.stalled);
 
     await _stopStreaming();
@@ -142,6 +144,17 @@ class TickerModelImpl extends TickerModel {
     await Future.delayed(const Duration(milliseconds: 500));
 
     await _startStreaming();
+  }
+
+  BehaviorSubject<TickerData> _getTickerStream(String symbol) {
+    final BehaviorSubject<TickerData>? stream = _tickerStreams[symbol];
+    if (stream != null) {
+      return stream;
+    }
+
+    final BehaviorSubject<TickerData> newStream = BehaviorSubject();
+    _tickerStreams[symbol] = newStream;
+    return newStream;
   }
 
   // endregion
