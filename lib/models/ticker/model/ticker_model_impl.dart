@@ -1,56 +1,196 @@
 import 'dart:async';
 
+import 'package:finonex_task/models/auth/_auth.dart';
 import 'package:finonex_task/models/ticker/model/ticker_connection_state.dart';
 import 'package:finonex_task/models/ticker/model/ticker_data.dart';
 import 'package:finonex_task/models/ticker/model/ticker_model.dart';
 import 'package:finonex_task/models/ticker/service/ticker_service.dart';
+import 'package:finonex_task/services/connectivity/_connectivity.dart';
 import 'package:rxdart/rxdart.dart';
 
+// Not closing stuff here as it's gonna live for the whole session and time is of essence now.
 class TickerModelImpl extends TickerModel {
   TickerModelImpl({
-    required this._service,
-  });
+    required this._authModel,
+    required this._connectivityService,
+    required this._tickerService,
+  }) {
+    _init();
+  }
 
   // TODO(genix): add throttling (if we have given sub it should mark as needing emit and periodic timer should then emit all updates)
 
-  final TickerService _service;
+  // region Dependencies
+
+  final AuthModel _authModel;
+  final ConnectivityService _connectivityService;
+  final TickerService _tickerService;
+
+  // endregion
+
+  // region Values
 
   final BehaviorSubject<TickerConnectionState> _connectionStream = BehaviorSubject.seeded(
     TickerConnectionState.connecting,
   );
-  StreamController<TickerData>? _controller;
+
+  Timer? _stalledTimer;
+
+  StreamSubscription<TickerData>? _serviceSubscription;
+  Map<String, BehaviorSubject<TickerData>> _tickerStreams = {};
+
+  Timer? _bufferTimer;
+  Map<String, TickerData> _buffer = {};
+
+  // endregion
+
+  // region Public
 
   @override
-  Stream<TickerData> getTickerStream(String symbol) {
-    if (_controller == null) {
-      _controller = StreamController<TickerData>.broadcast();
-      _startStreaming();
-    }
-
-    return _controller!.stream.where((ticker) => ticker.symbol == symbol);
-  }
+  Stream<TickerData> getTickerStream(String symbol) => _getTickerStream(symbol);
 
   @override
   ValueStream<TickerConnectionState> get connectionStream => _connectionStream.stream;
 
-  Future<void> dispose() async {
-    await _connectionStream.close();
+  // endregion
+
+  // region Private
+
+  void _init() {
+    CombineLatestStream.combine2(
+      _authModel.stateStream,
+      _connectivityService.stateStream,
+      (authState, connectivityState) => (authState, connectivityState),
+    ).listen((states) {
+      switch (states.$1) {
+        case AuthState.noUser:
+          unawaited(_stopStreaming());
+          return;
+
+        case AuthState.user:
+          break;
+      }
+
+      switch (states.$2) {
+        case ConnectivityState.unknown:
+        case ConnectivityState.notConnected:
+          unawaited(_stopStreaming());
+          return;
+
+        case ConnectivityState.connected:
+          unawaited(_startStreaming());
+          return;
+      }
+    });
   }
 
   Future<void> _startStreaming() async {
-    while (true) {
-      try {
-        final stream = await _service.getTickerDataStream();
-        await for (final data in stream) {
-          _controller?.add(data);
-        }
-      } catch (e) {
-        _controller?.addError(e);
-      }
+    print('start streaming');
 
-      // TODO(genix): the 2s are visible, but it works
-      // Wait before reconnecting to avoid tight loops on persistent errors
-      await Future.delayed(const Duration(seconds: 2));
+    if (_connectionStream.value == TickerConnectionState.live ||
+        _connectionStream.value == TickerConnectionState.connecting) {
+      return;
+    }
+
+    _connectionStream.add(TickerConnectionState.connecting);
+
+    _setBufferTimer();
+
+    try {
+      final stream = await _tickerService.getTickerDataStream();
+
+      _setStalledTimer();
+
+      _serviceSubscription = stream.listen(
+        (data) {
+          if (_connectionStream.value != TickerConnectionState.live) {
+            _connectionStream.add(TickerConnectionState.live);
+          }
+
+          _setStalledTimer();
+
+          _buffer[data.symbol] = data;
+        },
+        onError: (_) => unawaited(_markStalled()),
+        onDone: () => unawaited(_markStalled()),
+        cancelOnError: true,
+      );
+    } catch (e) {
+      unawaited(_markStalled());
     }
   }
+
+  Future<void> _stopStreaming() async {
+    print('stop streaming');
+
+    await _serviceSubscription?.cancel();
+    _serviceSubscription = null;
+
+    _stalledTimer?.cancel();
+
+    _flushBuffer();
+    _bufferTimer?.cancel();
+
+    _connectionStream.add(TickerConnectionState.disconnected);
+  }
+
+  void _setBufferTimer() {
+    _bufferTimer?.cancel();
+    _bufferTimer = Timer(const Duration(milliseconds: 500), _flushBuffer);
+  }
+
+  void _setStalledTimer() {
+    _stalledTimer?.cancel();
+    _stalledTimer = Timer(const Duration(seconds: 6), () async {
+      if (_connectionStream.isClosed) {
+        return;
+      }
+
+      if (_connectionStream.value != TickerConnectionState.live) {
+        // If not live, then don't update to stalled.
+        return;
+      }
+
+      _markStalled();
+    });
+  }
+
+  Future<void> _flushBuffer() async {
+    if (_buffer.isNotEmpty) {
+      final updates = Map<String, TickerData>.from(_buffer);
+      _buffer.clear();
+
+      for (final entry in updates.entries) {
+        _getTickerStream(entry.key).add(entry.value);
+      }
+    }
+
+    _setBufferTimer();
+  }
+
+  Future<void> _markStalled() async {
+    print('marking stalled');
+
+    _connectionStream.add(TickerConnectionState.stalled);
+
+    await _stopStreaming();
+
+    // TODO(genix): this could be dynamic (increasing and reset)
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    await _startStreaming();
+  }
+
+  BehaviorSubject<TickerData> _getTickerStream(String symbol) {
+    final BehaviorSubject<TickerData>? stream = _tickerStreams[symbol];
+    if (stream != null) {
+      return stream;
+    }
+
+    final BehaviorSubject<TickerData> newStream = BehaviorSubject();
+    _tickerStreams[symbol] = newStream;
+    return newStream;
+  }
+
+  // endregion
 }

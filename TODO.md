@@ -3,14 +3,14 @@
 #### Watchlist screen
 - [x] All instruments with live bid/ask, formatted to each instrument's decimals.
 - [x] Visual flash (e.g. green/red) when a price moves up/down.
-- [] A visible connection status: at minimum distinguish connecting, live, reconnecting, and stalled/degraded. The user must never look at frozen prices believing they're live.
+- [x] A visible connection status: at minimum distinguish connecting, live, reconnecting, and stalled/degraded. The user must never look at frozen prices believing they're live.
   - [x] UI
-  - [] Model side 
-- [] The list must stay smooth during bursts. We will open Flutter DevTools during grading and look at frame times and widget rebuild counts while the feed bursts. A full-list rebuild on every tick will not pass.
+  - [x] Model side 
+- [x] The list must stay smooth during bursts. We will open Flutter DevTools during grading and look at frame times and widget rebuild counts while the feed bursts. A full-list rebuild on every tick will not pass.
 
 #### Resilience semantics
-- [] Automatic reconnect with sensible backoff. Don't hammer the server; don't wait forever.
-- [] Detect silent stalls and recover from them.
+- [x] Automatic reconnect with sensible backoff. Don't hammer the server; don't wait forever.
+- [x] Detect silent stalls and recover from them.
 - [] A stale tick must never overwrite a newer price on screen.
 - [] Duplicates must not cause visible artifacts (e.g. double flashes).
 - [] Handle malformed events without killing the stream.
