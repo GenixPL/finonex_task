@@ -2,6 +2,7 @@ import 'package:finonex_task/models/auth/_auth.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:synchronized/synchronized.dart';
 
+// TODO(genix): there should be an init taking into account previous session
 class AuthModelImpl extends AuthModel {
   AuthModelImpl({
     required this._authStorage,
@@ -27,6 +28,9 @@ class AuthModelImpl extends AuthModel {
 
   @override
   Future<String?> login() async {
+    print('AuthModelImpl, log in');
+    await logout();
+
     final String? token = await _getTokenFromRepo();
     if (token == null) {
       return 'Failed to get the token!';
@@ -38,6 +42,7 @@ class AuthModelImpl extends AuthModel {
 
   @override
   Future<void> logout() async {
+    print('AuthModelImpl, log out');
     await _authStorage.deleteToken();
     _stateStream.add(AuthState.noUser);
   }
@@ -46,7 +51,6 @@ class AuthModelImpl extends AuthModel {
     return _getTokenLock.synchronized(() async {
       final TokenData? storedData = await _authStorage.getToken();
       if (storedData != null && !storedData.isExpired) {
-        print('AuthModelImpl, returning stored token.');
         return storedData.token;
       }
 
@@ -59,7 +63,6 @@ class AuthModelImpl extends AuthModel {
           expiresIn: loginResponse.expiresIn,
         ),
       );
-      print('AuthModelImpl, returning fresh token.');
       return loginResponse.token;
     });
   }
