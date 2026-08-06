@@ -33,6 +33,12 @@ class TickerModelImpl extends TickerModel {
 
   // region Values
 
+  static const _initialReconnectDelay = Duration(milliseconds: 500);
+  static const _maxReconnectDelay = Duration(seconds: 30);
+
+  Duration _currentReconnectDelay = _initialReconnectDelay;
+  bool _isReconnecting = false;
+
   final BehaviorSubject<TickerConnectionState> _connectionStream = BehaviorSubject.seeded(
     TickerConnectionState.connecting,
   );
@@ -83,6 +89,7 @@ class TickerModelImpl extends TickerModel {
           return;
 
         case ConnectivityState.connected:
+          _resetReconnectDelay();
           unawaited(_startStreaming());
           return;
       }
@@ -112,6 +119,7 @@ class TickerModelImpl extends TickerModel {
             case TickerTickEvent tickEvent:
               if (_connectionStream.value != TickerConnectionState.live) {
                 _connectionStream.add(TickerConnectionState.live);
+                _resetReconnectDelay();
               }
               _setStalledTimer();
               _lastEventId = tickEvent.id;
@@ -120,6 +128,7 @@ class TickerModelImpl extends TickerModel {
             case TickerPingEvent():
               print('ping, resetting stalled timer');
               _setStalledTimer();
+              _resetReconnectDelay();
 
             case TickerGapEvent(resumeFrom: final resumeFrom):
               print('Gap in stream, resume from $resumeFrom');
@@ -206,14 +215,30 @@ class TickerModelImpl extends TickerModel {
   }
 
   Future<void> _markStalled() async {
-    print('marking stalled');
+    if (_isReconnecting) {
+      return;
+    }
+    _isReconnecting = true;
 
-    _connectionStream.add(TickerConnectionState.stalled);
+    try {
+      print('marking stalled');
 
-    await _stopStreaming();
+      _connectionStream.add(TickerConnectionState.stalled);
 
-    // TODO(genix): this could be dynamic (increasing and reset)
-    await Future.delayed(const Duration(milliseconds: 500));
+      await _stopStreaming();
+
+      print('Waiting ${_currentReconnectDelay.inMilliseconds}ms before reconnecting');
+      await Future.delayed(_currentReconnectDelay);
+
+      _currentReconnectDelay = Duration(
+        milliseconds: (_currentReconnectDelay.inMilliseconds * 2).clamp(
+          _initialReconnectDelay.inMilliseconds,
+          _maxReconnectDelay.inMilliseconds,
+        ),
+      );
+    } finally {
+      _isReconnecting = false;
+    }
 
     await _startStreaming();
   }
@@ -227,6 +252,10 @@ class TickerModelImpl extends TickerModel {
     final BehaviorSubject<TickerData> newStream = BehaviorSubject();
     _tickerStreams[symbol] = newStream;
     return newStream;
+  }
+
+  void _resetReconnectDelay() {
+    _currentReconnectDelay = _initialReconnectDelay;
   }
 
   // endregion
