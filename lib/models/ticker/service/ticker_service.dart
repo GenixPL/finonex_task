@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:finonex_task/models/auth/_auth.dart';
 import 'package:finonex_task/models/ticker/_ticker.dart';
 import 'package:http/http.dart' as http;
+import 'package:rxdart/rxdart.dart';
 
 class TickerService {
   TickerService({
@@ -14,7 +15,7 @@ class TickerService {
   final String _baseUrl;
   final AuthModel _authModel;
 
-  Future<Stream<TickerData>> getTickerDataStream() async {
+  Future<Stream<TickerEvent>> getTickerDataStream() async {
     final token = await _authModel.getToken();
     if (token == null) throw Exception('No token available');
 
@@ -30,27 +31,49 @@ class TickerService {
     }
 
     String? currentEvent;
+    String? currentData;
+
     return response.stream
+        //
         .transform(utf8.decoder)
+        //
         .transform(const LineSplitter())
-        .map((line) {
+        //
+        .map<TickerEvent?>((line) {
           if (line.startsWith('event: ')) {
             currentEvent = line.substring(7);
           } else if (line.startsWith('data: ')) {
-            if (currentEvent == 'tick') {
-              final jsonString = line.substring(6);
-              try {
-                return TickerData.fromJson(jsonDecode(jsonString) as Map<String, dynamic>);
-              } catch (_) {
-                return null;
-              }
+            currentData = (currentData ?? '') + line.substring(6);
+          } else if (line.startsWith(':')) {
+            if (line.substring(1).trim() == 'ping') {
+              return const TickerPingEvent();
             }
           } else if (line.isEmpty) {
+            final eventName = currentEvent;
+            final eventData = currentData;
             currentEvent = null;
+            currentData = null;
+
+            if (eventName == 'tick' && eventData != null) {
+              try {
+                final data = TickerData.fromJson(jsonDecode(eventData) as Map<String, dynamic>);
+                return TickerTickEvent(data);
+              } catch (_) {
+                return TickerUnknownEvent(event: eventName, data: eventData);
+              }
+            } else if (eventName == 'gap' && eventData != null) {
+              try {
+                final json = jsonDecode(eventData) as Map<String, dynamic>;
+                return TickerGapEvent(json['resumeFrom'] as int);
+              } catch (_) {
+                return TickerUnknownEvent(event: eventName, data: eventData);
+              }
+            } else if (eventName != null || eventData != null) {
+              return TickerUnknownEvent(event: eventName, data: eventData);
+            }
           }
           return null;
         })
-        .where((ticker) => ticker != null)
-        .cast<TickerData>();
+        .whereType<TickerEvent>();
   }
 }

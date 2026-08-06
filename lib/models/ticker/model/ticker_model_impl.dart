@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:finonex_task/models/auth/_auth.dart';
 import 'package:finonex_task/models/ticker/model/ticker_connection_state.dart';
 import 'package:finonex_task/models/ticker/model/ticker_data.dart';
+import 'package:finonex_task/models/ticker/model/ticker_event.dart';
 import 'package:finonex_task/models/ticker/model/ticker_model.dart';
 import 'package:finonex_task/models/ticker/service/ticker_service.dart';
 import 'package:finonex_task/services/connectivity/_connectivity.dart';
@@ -36,7 +37,7 @@ class TickerModelImpl extends TickerModel {
 
   Timer? _stalledTimer;
 
-  StreamSubscription<TickerData>? _serviceSubscription;
+  StreamSubscription<TickerEvent>? _serviceSubscription;
   Map<String, BehaviorSubject<TickerData>> _tickerStreams = {};
 
   Timer? _bufferTimer;
@@ -102,14 +103,27 @@ class TickerModelImpl extends TickerModel {
       _setStalledTimer();
 
       _serviceSubscription = stream.listen(
-        (data) {
-          if (_connectionStream.value != TickerConnectionState.live) {
-            _connectionStream.add(TickerConnectionState.live);
+        (event) {
+          switch (event) {
+            case TickerTickEvent(data: final data):
+              if (_connectionStream.value != TickerConnectionState.live) {
+                _connectionStream.add(TickerConnectionState.live);
+              }
+
+              _setStalledTimer();
+
+              _buffer[data.symbol] = data;
+
+            case TickerPingEvent():
+              print('ping, resetting stalled timer');
+              _setStalledTimer();
+
+            case TickerGapEvent(resumeFrom: final resumeFrom):
+              print('Gap in stream, resume from $resumeFrom');
+
+            case TickerUnknownEvent(event: final eventName, data: final data):
+              print('Unknown event: $eventName, data: $data');
           }
-
-          _setStalledTimer();
-
-          _buffer[data.symbol] = data;
         },
         onError: (_) => unawaited(_markStalled()),
         onDone: () => unawaited(_markStalled()),
@@ -141,7 +155,7 @@ class TickerModelImpl extends TickerModel {
 
   void _setStalledTimer() {
     _stalledTimer?.cancel();
-    _stalledTimer = Timer(const Duration(seconds: 6), () async {
+    _stalledTimer = Timer(const Duration(seconds: 8), () async {
       if (_connectionStream.isClosed) {
         return;
       }
