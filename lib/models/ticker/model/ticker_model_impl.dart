@@ -36,7 +36,7 @@ class TickerModelImpl extends TickerModel {
 
   Timer? _stalledTimer;
 
-  StreamController<TickerData>? _serviceStream;
+  StreamSubscription<TickerData>? _serviceSubscription;
   Map<String, BehaviorSubject<TickerData>> _tickerStreams = {};
 
   Timer? _bufferTimer;
@@ -87,7 +87,8 @@ class TickerModelImpl extends TickerModel {
   Future<void> _startStreaming() async {
     print('start streaming');
 
-    if (_connectionStream.value == TickerConnectionState.live) {
+    if (_connectionStream.value == TickerConnectionState.live ||
+        _connectionStream.value == TickerConnectionState.connecting) {
       return;
     }
 
@@ -100,16 +101,7 @@ class TickerModelImpl extends TickerModel {
 
       _setStalledTimer();
 
-      _serviceStream = StreamController<TickerData>();
-      unawaited(
-        _serviceStream!.addStream(stream).then((_) {
-          if (!_connectionStream.isClosed) {
-            unawaited(_markStalled());
-          }
-        }),
-      );
-
-      _serviceStream!.stream.listen(
+      _serviceSubscription = stream.listen(
         (data) {
           if (_connectionStream.value != TickerConnectionState.live) {
             _connectionStream.add(TickerConnectionState.live);
@@ -131,7 +123,8 @@ class TickerModelImpl extends TickerModel {
   Future<void> _stopStreaming() async {
     print('stop streaming');
 
-    _serviceStream?.close();
+    await _serviceSubscription?.cancel();
+    _serviceSubscription = null;
 
     _stalledTimer?.cancel();
 
