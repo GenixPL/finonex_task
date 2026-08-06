@@ -1,4 +1,4 @@
-import 'package:finonex_task/models/_models.dart';
+import 'package:finonex_task/models/auth/_auth.dart';
 
 class AuthStorageInMemory extends AuthStorage {
   TokenData? _tokenData;

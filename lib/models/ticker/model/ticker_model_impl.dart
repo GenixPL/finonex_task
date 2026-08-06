@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:finonex_task/models/ticker/model/ticker_connection_state.dart';
 import 'package:finonex_task/models/ticker/model/ticker_data.dart';
 import 'package:finonex_task/models/ticker/model/ticker_model.dart';
 import 'package:finonex_task/models/ticker/service/ticker_service.dart';
+import 'package:rxdart/rxdart.dart';
 
 class TickerModelImpl extends TickerModel {
   TickerModelImpl({
@@ -13,16 +15,26 @@ class TickerModelImpl extends TickerModel {
 
   final TickerService _service;
 
+  final BehaviorSubject<TickerConnectionState> _connectionStream = BehaviorSubject.seeded(
+    TickerConnectionState.connecting,
+  );
   StreamController<TickerData>? _controller;
 
   @override
-  Stream<TickerData>? getTickerStream(String symbol) {
+  Stream<TickerData> getTickerStream(String symbol) {
     if (_controller == null) {
       _controller = StreamController<TickerData>.broadcast();
       _startStreaming();
     }
 
     return _controller!.stream.where((ticker) => ticker.symbol == symbol);
+  }
+
+  @override
+  ValueStream<TickerConnectionState> get connectionStream => _connectionStream.stream;
+
+  Future<void> dispose() async {
+    await _connectionStream.close();
   }
 
   Future<void> _startStreaming() async {

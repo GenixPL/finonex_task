@@ -1,5 +1,8 @@
-import 'package:finonex_task/models/ticker/model/ticker_data.dart';
+import 'package:finonex_task/models/ticker/_ticker.dart';
+import 'package:rxdart/rxdart.dart';
 
 abstract class TickerModel {
-  Stream<TickerData>? getTickerStream(String symbol);
+  Stream<TickerData> getTickerStream(String symbol);
+
+  ValueStream<TickerConnectionState> get connectionStream;
 }

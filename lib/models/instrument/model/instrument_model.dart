@@ -4,4 +4,6 @@ abstract class InstrumentModel {
   // TODO(genix): this model could use storage
 
   Future<List<InstrumentData>?> getInstruments();
+
+  Future<InstrumentData?> getInstrument(String symbol);
 }

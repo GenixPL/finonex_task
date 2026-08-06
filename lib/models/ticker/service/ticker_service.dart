@@ -1,6 +1,7 @@
 import 'dart:convert';
+import 'package:finonex_task/models/auth/_auth.dart';
+import 'package:finonex_task/models/ticker/_ticker.dart';
 import 'package:http/http.dart' as http;
-import 'package:finonex_task/models/_models.dart';
 
 class TickerService {
   TickerService({

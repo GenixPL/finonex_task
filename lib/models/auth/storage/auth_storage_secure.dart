@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:finonex_task/models/_models.dart';
-import 'package:finonex_task/services/_services.dart';
+import 'package:finonex_task/models/auth/_auth.dart';
+import 'package:finonex_task/services/secure_storage/_secure_storage.dart';
 
 class AuthStorageSecure extends AuthStorage {
   AuthStorageSecure({

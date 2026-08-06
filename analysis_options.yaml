@@ -1,5 +1,9 @@
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  exclude:
+    - 'feed_server.dart'
+
 formatter:
   trailing_commas: preserve
 

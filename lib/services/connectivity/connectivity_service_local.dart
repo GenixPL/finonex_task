@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:finonex_task/services/_services.dart';
+import 'package:finonex_task/services/connectivity/_connectivity.dart';
 import 'package:flutter/services.dart';
 import 'package:rxdart/rxdart.dart';
 

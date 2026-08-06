@@ -1,8 +1,10 @@
 import 'dart:io';
 
 import 'package:finonex_task/deps/_deps.dart';
-import 'package:finonex_task/models/_models.dart';
-import 'package:finonex_task/services/_services.dart';
+import 'package:finonex_task/models/auth/_auth.dart';
+import 'package:finonex_task/models/instrument/_instrument.dart';
+import 'package:finonex_task/models/ticker/_ticker.dart';
+import 'package:finonex_task/services/secure_storage/_secure_storage.dart';
 import 'package:http/http.dart';
 
 class ModelDepsFactory {
@@ -37,9 +39,6 @@ class ModelDepsFactory {
         service: InstrumentServiceFake(),
       ),
       tickerModel: tickerModel,
-      connectivityModel: ConnectivityModel(
-        service: ConnectivityServiceLocal(),
-      ),
     );
   }
 }

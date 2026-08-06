@@ -1,5 +1,6 @@
 import 'package:finonex_task/main.dart';
-import 'package:finonex_task/ui/_ui.dart';
+import 'package:finonex_task/ui/connectivity_indicator/connectivity_indicator.dart';
+import 'package:finonex_task/ui/instrument_container/instrument_container.dart';
 import 'package:flutter/material.dart';
 
 class MyHomeScreen extends StatelessWidget {
@@ -10,7 +11,7 @@ class MyHomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        leading: const RepaintBoundary(
+        title: const RepaintBoundary(
           child: ConnectivityIndicator(),
         ),
         actions: [
@@ -23,7 +24,9 @@ class MyHomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: const InstrumentsContainer(),
+      body: const SafeArea(
+        child: InstrumentsContainer(),
+      ),
     );
   }
 }

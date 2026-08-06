@@ -1,4 +1,4 @@
-import 'package:finonex_task/models/_models.dart';
+import 'package:finonex_task/models/instrument/_instrument.dart';
 
 class InstrumentServiceFake extends InstrumentService {
   @override
