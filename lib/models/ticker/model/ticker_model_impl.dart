@@ -60,35 +60,77 @@ class TickerModelImpl extends TickerModel {
     CombineLatestStream.combine2(
       _authModel.stateStream,
       _connectivityService.stateStream,
-      (authState, connectivityState) {
-        switch (authState) {
-          case AuthState.noUser:
-            unawaited(_stopStreaming());
-            return;
+      (authState, connectivityState) => (authState, connectivityState),
+    ).listen((states) {
+      switch (states.$1) {
+        case AuthState.noUser:
+          unawaited(_stopStreaming());
+          return;
 
-          case AuthState.user:
-            break;
-        }
+        case AuthState.user:
+          break;
+      }
 
-        switch (connectivityState) {
-          case ConnectivityState.unknown:
-          case ConnectivityState.notConnected:
-            unawaited(_stopStreaming());
-            return;
+      switch (states.$2) {
+        case ConnectivityState.unknown:
+        case ConnectivityState.notConnected:
+          unawaited(_stopStreaming());
+          return;
 
-          case ConnectivityState.connected:
-            unawaited(_startStreaming());
-            return;
-        }
-      },
-    );
+        case ConnectivityState.connected:
+          unawaited(_startStreaming());
+          return;
+      }
+    });
   }
 
   Future<void> _startStreaming() async {
+    print('start streaming');
+
+    if (_connectionStream.value == TickerConnectionState.live) {
+      return;
+    }
+
+    _connectionStream.add(TickerConnectionState.connecting);
+
     _setBufferTimer();
+
+    try {
+      final stream = await _tickerService.getTickerDataStream();
+
+      _setStalledTimer();
+
+      _serviceStream = StreamController<TickerData>();
+      unawaited(
+        _serviceStream!.addStream(stream).then((_) {
+          if (!_connectionStream.isClosed) {
+            unawaited(_markStalled());
+          }
+        }),
+      );
+
+      _serviceStream!.stream.listen(
+        (data) {
+          if (_connectionStream.value != TickerConnectionState.live) {
+            _connectionStream.add(TickerConnectionState.live);
+          }
+
+          _setStalledTimer();
+
+          _buffer[data.symbol] = data;
+        },
+        onError: (_) => unawaited(_markStalled()),
+        onDone: () => unawaited(_markStalled()),
+        cancelOnError: true,
+      );
+    } catch (e) {
+      unawaited(_markStalled());
+    }
   }
 
   Future<void> _stopStreaming() async {
+    print('stop streaming');
+
     _serviceStream?.close();
 
     _stalledTimer?.cancel();
@@ -104,7 +146,7 @@ class TickerModelImpl extends TickerModel {
     _bufferTimer = Timer(const Duration(milliseconds: 300), _flushBuffer);
   }
 
-  void _resetStalledTimer() {
+  void _setStalledTimer() {
     _stalledTimer?.cancel();
     _stalledTimer = Timer(const Duration(seconds: 5), () async {
       if (_connectionStream.isClosed) {
