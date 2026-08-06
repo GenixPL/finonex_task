@@ -25,8 +25,6 @@ class TickerModelImpl extends TickerModel {
     _init();
   }
 
-  // TODO(genix): add throttling (if we have given sub it should mark as needing emit and periodic timer should then emit all updates)
-
   // region Dependencies
 
   final AuthModel _authModel;

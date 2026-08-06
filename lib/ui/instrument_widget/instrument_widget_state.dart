@@ -12,7 +12,6 @@ class FailedToGetInstrumentData extends InstrumentWidgetState {
   List<Object?> get props => [];
 }
 
-// TODO(genix): add ==
 class DataLoaded extends InstrumentWidgetState {
   DataLoaded({
     required this.symbol,

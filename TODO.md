@@ -21,7 +21,7 @@
 - [x] EventChannel: native network reachability events (NWPathMonitor / ConnectivityManager), and use them in your reconnect logic - don't spin reconnect attempts while the device is known-offline.
 
 #### Tests
-- [] Add
+- [~] Add
 
 #### Architecture
 - [x] Should be implemented using bloc and flutter_bloc library using BLoCs (not Cubits).
