@@ -34,4 +34,9 @@ class AuthStorageSecure extends AuthStorage {
       value: jsonEncode(tokenData.toJson()),
     );
   }
+
+  @override
+  Future<void> deleteToken() async {
+    _secureStorage.deleteKey(_tokenKey);
+  }
 }

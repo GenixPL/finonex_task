@@ -25,4 +25,8 @@ class SecureStorageManager(context: Context) {
     fun set(key: String, value: String) {
         sharedPreferences.edit { putString(key, value) }
     }
+
+    fun delete(key: String) {
+        sharedPreferences.edit { remove(key) }
+    }
 }

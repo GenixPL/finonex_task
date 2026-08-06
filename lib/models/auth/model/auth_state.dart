@@ -1,0 +1,4 @@
+enum AuthState {
+  noUser,
+  user,
+}

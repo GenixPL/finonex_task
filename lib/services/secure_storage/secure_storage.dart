@@ -5,4 +5,6 @@ abstract class SecureStorage {
     required String key,
     required String value,
   });
+
+  Future<void> deleteKey(String key);
 }

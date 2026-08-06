@@ -25,4 +25,13 @@ class SecureStorageLocal extends SecureStorage {
       print('Failed to set key: ${e.message}');
     }
   }
+
+  @override
+  Future<void> deleteKey(String key) async {
+    try {
+      await _channel.invokeMethod('deleteKey', {'key': key});
+    } on PlatformException catch (e) {
+      print('Failed to delete key: ${e.message}');
+    }
+  }
 }

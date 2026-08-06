@@ -24,6 +24,15 @@ class SecureStorageHandler(private val secureStorageManager: SecureStorageManage
                     result.error("INVALID_ARGUMENT", "Key or value is null", null)
                 }
             }
+            "deleteKey" -> {
+                val key = call.argument<String>("key")
+                if (key != null) {
+                    secureStorageManager.delete(key)
+                    result.success(null)
+                } else {
+                    result.error("INVALID_ARGUMENT", "Key is null", null)
+                }
+            }
             else -> result.notImplemented()
         }
     }

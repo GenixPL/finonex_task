@@ -4,4 +4,6 @@ abstract class AuthStorage {
   Future<TokenData?> getToken();
 
   Future<void> setToken(TokenData tokenData);
+
+  Future<void> deleteToken();
 }

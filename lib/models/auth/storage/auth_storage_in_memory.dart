@@ -9,7 +9,12 @@ class AuthStorageInMemory extends AuthStorage {
   }
 
   @override
-  Future<void> setToken(TokenData? tokenData) async {
+  Future<void> setToken(TokenData tokenData) async {
     _tokenData = tokenData;
+  }
+
+  @override
+  Future<void> deleteToken() async {
+    _tokenData = null;
   }
 }
