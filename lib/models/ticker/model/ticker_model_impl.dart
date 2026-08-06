@@ -42,6 +42,8 @@ class TickerModelImpl extends TickerModel {
   StreamSubscription<TickerEvent>? _serviceSubscription;
   final Map<String, BehaviorSubject<TickerData>> _tickerStreams = {};
 
+  String? _lastEventId;
+
   Timer? _bufferTimer;
   final Map<String, TickerData> _buffer = {};
 
@@ -100,7 +102,7 @@ class TickerModelImpl extends TickerModel {
     _setBufferTimer();
 
     try {
-      final stream = await _tickerService.getTickerDataStream();
+      final stream = await _tickerService.getTickerDataStream(lastEventId: _lastEventId);
 
       _setStalledTimer();
 
@@ -112,6 +114,7 @@ class TickerModelImpl extends TickerModel {
                 _connectionStream.add(TickerConnectionState.live);
               }
               _setStalledTimer();
+              _lastEventId = tickEvent.id;
               _handleTickEvent(tickEvent);
 
             case TickerPingEvent():
@@ -120,7 +123,8 @@ class TickerModelImpl extends TickerModel {
 
             case TickerGapEvent(resumeFrom: final resumeFrom):
               print('Gap in stream, resume from $resumeFrom');
-              // TODO(genix): handle
+              _lastEventId = (resumeFrom - 1).toString();
+              unawaited(_markStalled());
 
             case TickerUnknownEvent(event: final eventName, data: final data):
               print('Unknown event: $eventName, data: $data');

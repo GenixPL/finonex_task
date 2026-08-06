@@ -6,10 +6,11 @@ sealed class TickerEvent {
 
 class TickerTickEvent extends TickerEvent {
   final TickerData data;
-  const TickerTickEvent(this.data);
+  final String? id;
+  const TickerTickEvent(this.data, {this.id});
 
   @override
-  String toString() => 'TickerTickEvent(data: $data)';
+  String toString() => 'TickerTickEvent(data: $data, id: $id)';
 }
 
 class TickerGapEvent extends TickerEvent {

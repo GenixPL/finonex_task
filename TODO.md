@@ -11,7 +11,7 @@
 #### Resilience semantics
 - [x] Automatic reconnect with sensible backoff. Don't hammer the server; don't wait forever.
 - [x] Detect silent stalls and recover from them.
-- [] A stale tick must never overwrite a newer price on screen.
+- [x] A stale tick must never overwrite a newer price on screen.
 - [x] Duplicates must not cause visible artifacts (e.g. double flashes).
 - [x] Handle malformed events without killing the stream.
 - [x] Handle token expiry without user intervention after the initial login.

@@ -15,7 +15,7 @@ class TickerService {
   final String _baseUrl;
   final AuthModel _authModel;
 
-  Future<Stream<TickerEvent>> getTickerDataStream() async {
+  Future<Stream<TickerEvent>> getTickerDataStream({String? lastEventId}) async {
     final token = await _authModel.getToken();
     if (token == null) throw Exception('No token available');
 
@@ -23,6 +23,10 @@ class TickerService {
       ..headers['Authorization'] = 'Bearer $token'
       ..headers['Accept'] = 'text/event-stream'
       ..headers['Cache-Control'] = 'no-cache';
+
+    if (lastEventId != null) {
+      request.headers['Last-Event-ID'] = lastEventId;
+    }
 
     final response = await _client.send(request);
 
@@ -32,6 +36,7 @@ class TickerService {
 
     String? currentEvent;
     String? currentData;
+    String? currentId;
 
     return response.stream
         //
@@ -44,6 +49,8 @@ class TickerService {
             currentEvent = line.substring(7);
           } else if (line.startsWith('data: ')) {
             currentData = (currentData ?? '') + line.substring(6);
+          } else if (line.startsWith('id: ')) {
+            currentId = line.substring(4);
           } else if (line.startsWith(':')) {
             if (line.substring(1).trim() == 'ping') {
               return const TickerPingEvent();
@@ -51,13 +58,15 @@ class TickerService {
           } else if (line.isEmpty) {
             final eventName = currentEvent;
             final eventData = currentData;
+            final eventId = currentId;
             currentEvent = null;
             currentData = null;
+            currentId = null;
 
             if (eventName == 'tick' && eventData != null) {
               try {
                 final data = TickerData.fromJson(jsonDecode(eventData) as Map<String, dynamic>);
-                return TickerTickEvent(data);
+                return TickerTickEvent(data, id: eventId);
               } catch (_) {
                 return TickerUnknownEvent(event: eventName, data: eventData);
               }
