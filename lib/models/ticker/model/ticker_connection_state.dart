@@ -3,4 +3,5 @@ enum TickerConnectionState {
   live,
   reconnecting,
   stalled,
+  disconnected,
 }
