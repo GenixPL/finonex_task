@@ -9,3 +9,5 @@ there are two ide configs in .run
 `flutter run` 
 
 `flutter run --profile`
+
+(remember to run the server)
