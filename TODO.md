@@ -14,7 +14,7 @@
 - [] A stale tick must never overwrite a newer price on screen.
 - [] Duplicates must not cause visible artifacts (e.g. double flashes).
 - [] Handle malformed events without killing the stream.
-- [] Handle token expiry without user intervention after the initial login.
+- [x] Handle token expiry without user intervention after the initial login.
 
 #### Native piece
 - [x] MethodChannel: store/read/delete the auth token in the platform's secure storage (Keychain on iOS, Keystore/EncryptedSharedPreferences on Android).
