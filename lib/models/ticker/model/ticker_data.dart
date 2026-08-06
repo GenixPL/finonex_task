@@ -1,4 +1,6 @@
-class TickerData {
+import 'package:equatable/equatable.dart';
+
+class TickerData with Equatable {
   final String symbol;
   final double bid;
   final double ask;
@@ -33,4 +35,12 @@ class TickerData {
   String toString() {
     return 'TickerData(symbol: $symbol, bid: $bid, ask: $ask, timestamp: $timestamp)';
   }
+
+  @override
+  List<Object?> get props => [
+    symbol,
+    bid,
+    ask,
+    timestamp,
+  ];
 }

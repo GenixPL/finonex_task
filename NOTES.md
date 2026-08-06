@@ -4,7 +4,8 @@
 - auth doesnt restore previous session
 - InstrumentModel is just a mock
 - android's secure storage is swamped with deprecated warnings, "fix the deprecation warning in android's secure storage" burned through all my tokens, and i didn't have time to actually read documentation and debug (i assume such a thing would take a few days normally)
-- the app seems to sometimes enter "disconnected" mode despite user being logged in (no mote time to debug, fix and test, probably "recent" test generation, and associated model changes, have caused it) 
+- there's slight jank every now and then, no more time to play to play with isolates and other things though
+- the app seems to sometimes enter "disconnected" mode despite user being logged in (only app restart helps) (no more time to debug, fix and test, probably "recent" test generation, and associated model changes, have caused it) 
 ```
 I/flutter ( 5089): Waiting 500ms before reconnecting
 I/flutter ( 5089): start streaming
@@ -17,6 +18,15 @@ I/flutter ( 5089): start streaming
 I/flutter ( 5089): ping, resetting stalled timer
 I/flutter ( 5089): ping, resetting stalled timer
 I/flutter ( 5089): stop streaming
+
+I/flutter ( 6071): AuthModelImpl, log in
+I/flutter ( 6071): AuthModelImpl, log out
+I/flutter ( 6071): stop streaming
+I/flutter ( 6071): stop streaming
+I/flutter ( 6071): AuthModelImpl, log in
+I/flutter ( 6071): AuthModelImpl, log out
+I/flutter ( 6071): stop streaming
+I/flutter ( 6071): stop streaming
 ```
 
 # Would improve
