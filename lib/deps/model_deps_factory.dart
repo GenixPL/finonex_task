@@ -4,6 +4,7 @@ import 'package:finonex_task/deps/_deps.dart';
 import 'package:finonex_task/models/auth/_auth.dart';
 import 'package:finonex_task/models/instrument/_instrument.dart';
 import 'package:finonex_task/models/ticker/_ticker.dart';
+import 'package:finonex_task/services/connectivity/_connectivity.dart';
 import 'package:finonex_task/services/secure_storage/_secure_storage.dart';
 import 'package:http/http.dart';
 
@@ -13,6 +14,7 @@ class ModelDepsFactory {
     final Client httpClient = Client();
 
     final SecureStorage secureStorage = SecureStorageLocal();
+    final ConnectivityService connectivityService = ConnectivityServiceLocal();
 
     final authModel = AuthModelImpl(
       // authStorage: AuthStorageInMemory(),
@@ -26,7 +28,9 @@ class ModelDepsFactory {
     );
 
     final tickerModel = TickerModelImpl(
-      service: TickerService(
+      authModel: authModel,
+      connectivityService: connectivityService,
+      tickerService: TickerService(
         client: httpClient,
         baseUrl: baseUrl,
         authModel: authModel,
