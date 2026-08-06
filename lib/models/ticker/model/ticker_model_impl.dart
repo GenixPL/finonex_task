@@ -105,14 +105,12 @@ class TickerModelImpl extends TickerModel {
       _serviceSubscription = stream.listen(
         (event) {
           switch (event) {
-            case TickerTickEvent(data: final data):
+            case TickerTickEvent(event):
               if (_connectionStream.value != TickerConnectionState.live) {
                 _connectionStream.add(TickerConnectionState.live);
               }
-
               _setStalledTimer();
-
-              _buffer[data.symbol] = data;
+              _handleTickEvent(event);
 
             case TickerPingEvent():
               print('ping, resetting stalled timer');
@@ -132,6 +130,10 @@ class TickerModelImpl extends TickerModel {
     } catch (e) {
       unawaited(_markStalled());
     }
+  }
+
+  void _handleTickEvent(TickerTickEvent event) {
+    _buffer[event.data.symbol] = event.data;
   }
 
   Future<void> _stopStreaming() async {
