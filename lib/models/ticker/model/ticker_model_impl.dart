@@ -136,7 +136,7 @@ class TickerModelImpl extends TickerModel {
 
   void _setBufferTimer() {
     _bufferTimer?.cancel();
-    _bufferTimer = Timer(const Duration(milliseconds: 300), _flushBuffer);
+    _bufferTimer = Timer(const Duration(milliseconds: 500), _flushBuffer);
   }
 
   void _setStalledTimer() {
