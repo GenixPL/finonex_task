@@ -148,7 +148,7 @@ class TickerModelImpl extends TickerModel {
 
   void _setStalledTimer() {
     _stalledTimer?.cancel();
-    _stalledTimer = Timer(const Duration(seconds: 5), () async {
+    _stalledTimer = Timer(const Duration(seconds: 6), () async {
       if (_connectionStream.isClosed) {
         return;
       }

@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
-int _tokenExpiryInSec = 10;
+int _tokenExpiryInSec = 60;
 
 class Instrument {
   final String symbol;
