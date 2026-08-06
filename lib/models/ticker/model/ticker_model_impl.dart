@@ -17,7 +17,11 @@ class TickerModelImpl extends TickerModel {
     required this._authModel,
     required this._connectivityService,
     required this._tickerService,
+    this.stalledDuration = const Duration(seconds: 8),
+    this.bufferDuration = const Duration(milliseconds: 500),
+    this.initialReconnectDelay = const Duration(milliseconds: 500),
   }) {
+    _currentReconnectDelay = initialReconnectDelay;
     _init();
   }
 
@@ -29,14 +33,17 @@ class TickerModelImpl extends TickerModel {
   final ConnectivityService _connectivityService;
   final TickerService _tickerService;
 
+  final Duration stalledDuration;
+  final Duration bufferDuration;
+  final Duration initialReconnectDelay;
+
   // endregion
 
   // region Values
 
-  static const _initialReconnectDelay = Duration(milliseconds: 500);
   static const _maxReconnectDelay = Duration(seconds: 30);
 
-  Duration _currentReconnectDelay = _initialReconnectDelay;
+  late Duration _currentReconnectDelay;
   bool _isReconnecting = false;
 
   final BehaviorSubject<TickerConnectionState> _connectionStream = BehaviorSubject.seeded(
@@ -127,6 +134,9 @@ class TickerModelImpl extends TickerModel {
 
             case TickerPingEvent():
               print('ping, resetting stalled timer');
+              if (_connectionStream.value != TickerConnectionState.live) {
+                _connectionStream.add(TickerConnectionState.live);
+              }
               _setStalledTimer();
               _resetReconnectDelay();
 
@@ -166,7 +176,7 @@ class TickerModelImpl extends TickerModel {
     _buffer[symbol] = incomingData;
   }
 
-  Future<void> _stopStreaming() async {
+  Future<void> _stopStreaming({TickerConnectionState targetState = TickerConnectionState.disconnected}) async {
     print('stop streaming');
 
     await _serviceSubscription?.cancel();
@@ -177,17 +187,17 @@ class TickerModelImpl extends TickerModel {
     _flushBuffer();
     _bufferTimer?.cancel();
 
-    _connectionStream.add(TickerConnectionState.disconnected);
+    _connectionStream.add(targetState);
   }
 
   void _setBufferTimer() {
     _bufferTimer?.cancel();
-    _bufferTimer = Timer(const Duration(milliseconds: 500), _flushBuffer);
+    _bufferTimer = Timer(bufferDuration, _flushBuffer);
   }
 
   void _setStalledTimer() {
     _stalledTimer?.cancel();
-    _stalledTimer = Timer(const Duration(seconds: 8), () async {
+    _stalledTimer = Timer(stalledDuration, () async {
       if (_connectionStream.isClosed) {
         return;
       }
@@ -223,16 +233,14 @@ class TickerModelImpl extends TickerModel {
     try {
       print('marking stalled');
 
-      _connectionStream.add(TickerConnectionState.stalled);
-
-      await _stopStreaming();
+      await _stopStreaming(targetState: TickerConnectionState.stalled);
 
       print('Waiting ${_currentReconnectDelay.inMilliseconds}ms before reconnecting');
       await Future.delayed(_currentReconnectDelay);
 
       _currentReconnectDelay = Duration(
         milliseconds: (_currentReconnectDelay.inMilliseconds * 2).clamp(
-          _initialReconnectDelay.inMilliseconds,
+          initialReconnectDelay.inMilliseconds,
           _maxReconnectDelay.inMilliseconds,
         ),
       );
@@ -255,7 +263,7 @@ class TickerModelImpl extends TickerModel {
   }
 
   void _resetReconnectDelay() {
-    _currentReconnectDelay = _initialReconnectDelay;
+    _currentReconnectDelay = initialReconnectDelay;
   }
 
   // endregion

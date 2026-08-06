@@ -45,4 +45,9 @@ class ModelDepsFactory {
       tickerModel: tickerModel,
     );
   }
+
+  static ModelDeps test() {
+    // TODO(genix): build for integration tests
+    throw UnimplementedError();
+  }
 }
