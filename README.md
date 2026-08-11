@@ -10,4 +10,6 @@ there are two ide configs in .run
 
 `flutter run --profile`
 
-(remember to run the server)
+(remember to run the server, port 8080)
+
+((sorry for missing .git, it's not often I download .zip, and didn't realize it doesn't have it))

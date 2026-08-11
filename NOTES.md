@@ -45,6 +45,7 @@ I/flutter ( 6071): stop streaming
 - the ConnectivityService, on the dart side, could add some logic checking whether we actually have access to the internet
 - do some more profiling
 - test on older, and weaker, devices
+- better commit messages (probably during pr and squashing)
 
 # Decision
 
