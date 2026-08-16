@@ -78,7 +78,7 @@ class TickerModelImpl extends TickerModel {
       _connectivityService.stateStream,
       (authState, connectivityState) => (authState, connectivityState),
     ).listen((states) {
-      _optionalStartStreaming();
+      unawaited(_optionalStartStreaming());
     });
   }
 
