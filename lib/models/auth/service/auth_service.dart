@@ -12,16 +12,18 @@ class AuthService {
   });
 
   Future<LoginResponse> login(String username, String password) async {
-    final response = await _httpClient.post(
-      Uri.parse('$baseUrl/login'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'username': username,
-        'password': password,
-      }),
-    );
+    final response = await _httpClient
+        .post(
+          Uri.parse('$baseUrl/login'),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'username': username,
+            'password': password,
+          }),
+        )
+        .timeout(const Duration(seconds: 5));
 
     if (response.statusCode == 200) {
       return LoginResponse.fromJson(jsonDecode(response.body) as Map<String, dynamic>);

@@ -16,6 +16,8 @@ class TickerService {
   final AuthModel _authModel;
 
   Future<Stream<TickerEvent>> getTickerDataStream({String? lastEventId}) async {
+    print('get stream');
+
     final token = await _authModel.getToken();
     if (token == null) throw Exception('No token available');
 
@@ -28,7 +30,7 @@ class TickerService {
       request.headers['Last-Event-ID'] = lastEventId;
     }
 
-    final response = await _client.send(request);
+    final response = await _client.send(request).timeout(const Duration(seconds: 5));
 
     if (response.statusCode != 200) {
       throw Exception('Failed to connect to ticker stream: ${response.statusCode}');
