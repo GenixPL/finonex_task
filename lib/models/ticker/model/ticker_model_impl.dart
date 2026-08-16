@@ -85,12 +85,6 @@ class TickerModelImpl extends TickerModel {
   Future<void> _optionalStartStreaming() async {
     print('start streaming');
 
-    if (_connectionStream.value == TickerConnectionState.live ||
-        _connectionStream.value == TickerConnectionState.connecting) {
-      print('already connected');
-      return;
-    }
-
     switch (_authModel.stateStream.value) {
       case AuthState.noUser:
         print('no user');
@@ -110,6 +104,12 @@ class TickerModelImpl extends TickerModel {
 
       case ConnectivityState.connected:
         break;
+    }
+
+    if (_connectionStream.value == TickerConnectionState.live ||
+        _connectionStream.value == TickerConnectionState.connecting) {
+      print('already connected');
+      return;
     }
 
     _connectionStream.add(TickerConnectionState.connecting);
@@ -179,7 +179,9 @@ class TickerModelImpl extends TickerModel {
     _buffer[symbol] = incomingData;
   }
 
-  Future<void> _stopStreaming({TickerConnectionState targetState = TickerConnectionState.disconnected}) async {
+  Future<void> _stopStreaming({
+    TickerConnectionState targetState = TickerConnectionState.disconnected,
+  }) async {
     print('stop streaming');
 
     await _serviceSubscription?.cancel();
