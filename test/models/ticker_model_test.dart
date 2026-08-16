@@ -169,7 +169,38 @@ void main() {
     expect(tickerService.callCount, 2);
     expect(tickerModel.connectionStream.value, TickerConnectionState.stalled);
 
+    // System-inform about missing connection.
     connectivityService.setState(ConnectivityState.notConnected);
+
+    // After reconnect delay, it should NOT try to reconnect due to guaranteed missing connection.
+    await Future.delayed((reconnectDelay * 2) + const Duration(milliseconds: 20));
+    expect(tickerService.callCount, 2);
+    expect(tickerModel.connectionStream.value, TickerConnectionState.disconnected);
+  });
+
+  test('model reconnects upon stale but only until user is logged in', () async {
+    await authModel.login();
+    await pump();
+
+    tickerService.addEvent(const TickerPingEvent());
+    await pump();
+    expect(tickerModel.connectionStream.value, TickerConnectionState.live);
+
+    // Wait for stalled timer to trigger
+    await Future.delayed(stalledDuration + const Duration(milliseconds: 10));
+
+    // It should be stalled now (waiting for reconnectDelay)
+    expect(tickerModel.connectionStream.value, TickerConnectionState.stalled);
+
+    // Simulate failing connection (but yet without actual update from the system).
+    tickerService.getStreamException = Exception('simulating failed request due to lacking connection');
+
+    // After reconnect delay, it should try to reconnect.
+    await Future.delayed(reconnectDelay + const Duration(milliseconds: 20));
+    expect(tickerService.callCount, 2);
+    expect(tickerModel.connectionStream.value, TickerConnectionState.stalled);
+
+    await authModel.logout();
 
     // After reconnect delay, it should NOT try to reconnect due to guaranteed missing connection.
     await Future.delayed((reconnectDelay * 2) + const Duration(milliseconds: 20));
