@@ -1,7 +1,7 @@
 enum TickerConnectionState {
   connecting,
   live,
-  reconnecting,
+  // reconnecting,
   stalled,
   disconnected,
 }
