@@ -45,7 +45,7 @@ class TickerModelImpl extends TickerModel {
   bool _isReconnecting = false;
 
   final BehaviorSubject<TickerConnectionState> _connectionStream = BehaviorSubject.seeded(
-    TickerConnectionState.connecting,
+    TickerConnectionState.disconnected,
   );
 
   Timer? _stalledTimer;
@@ -78,35 +78,38 @@ class TickerModelImpl extends TickerModel {
       _connectivityService.stateStream,
       (authState, connectivityState) => (authState, connectivityState),
     ).listen((states) {
-      switch (states.$1) {
-        case AuthState.noUser:
-          unawaited(_stopStreaming());
-          return;
-
-        case AuthState.user:
-          break;
-      }
-
-      switch (states.$2) {
-        case ConnectivityState.unknown:
-        case ConnectivityState.notConnected:
-          unawaited(_stopStreaming());
-          return;
-
-        case ConnectivityState.connected:
-          _resetReconnectDelay();
-          unawaited(_startStreaming());
-          return;
-      }
+      _optionalStartStreaming();
     });
   }
 
-  Future<void> _startStreaming() async {
+  Future<void> _optionalStartStreaming() async {
     print('start streaming');
 
     if (_connectionStream.value == TickerConnectionState.live ||
         _connectionStream.value == TickerConnectionState.connecting) {
+      print('already connected');
       return;
+    }
+
+    switch (_authModel.stateStream.value) {
+      case AuthState.noUser:
+        print('no user');
+        unawaited(_stopStreaming());
+        return;
+
+      case AuthState.user:
+        break;
+    }
+
+    switch (_connectivityService.stateStream.value) {
+      case ConnectivityState.unknown:
+      case ConnectivityState.notConnected:
+        print('no connection');
+        unawaited(_stopStreaming());
+        return;
+
+      case ConnectivityState.connected:
+        break;
     }
 
     _connectionStream.add(TickerConnectionState.connecting);
@@ -117,6 +120,7 @@ class TickerModelImpl extends TickerModel {
       final stream = await _tickerService.getTickerDataStream(lastEventId: _lastEventId);
 
       _setStalledTimer();
+      _resetReconnectDelay();
 
       _serviceSubscription = stream.listen(
         (event) {
@@ -152,6 +156,7 @@ class TickerModelImpl extends TickerModel {
         cancelOnError: true,
       );
     } catch (e) {
+      print(e);
       unawaited(_markStalled());
     }
   }
@@ -246,7 +251,7 @@ class TickerModelImpl extends TickerModel {
       _isReconnecting = false;
     }
 
-    await _startStreaming();
+    await _optionalStartStreaming();
   }
 
   BehaviorSubject<TickerData> _getTickerStream(String symbol) {

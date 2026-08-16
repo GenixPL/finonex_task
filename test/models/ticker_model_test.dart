@@ -42,11 +42,17 @@ class MockTickerService implements TickerService {
   final _controller = StreamController<TickerEvent>.broadcast();
   int callCount = 0;
   String? lastId;
+  Exception? getStreamException;
 
   @override
   Future<Stream<TickerEvent>> getTickerDataStream({String? lastEventId}) async {
     callCount++;
     lastId = lastEventId;
+
+    if (getStreamException != null) {
+      throw getStreamException!;
+    }
+
     return _controller.stream;
   }
 
@@ -141,6 +147,36 @@ void main() {
     expect(tickerModel.connectionStream.value, TickerConnectionState.connecting);
   });
 
+  test('model reconnects upon stale but only until connection is possible', () async {
+    await authModel.login();
+    await pump();
+
+    tickerService.addEvent(const TickerPingEvent());
+    await pump();
+    expect(tickerModel.connectionStream.value, TickerConnectionState.live);
+
+    // Wait for stalled timer to trigger
+    await Future.delayed(stalledDuration + const Duration(milliseconds: 10));
+
+    // It should be stalled now (waiting for reconnectDelay)
+    expect(tickerModel.connectionStream.value, TickerConnectionState.stalled);
+
+    // Simulate failing connection (but yet without actual update from the system).
+    tickerService.getStreamException = Exception('simulating failed request due to lacking connection');
+
+    // After reconnect delay, it should try to reconnect.
+    await Future.delayed(reconnectDelay + const Duration(milliseconds: 20));
+    expect(tickerService.callCount, 2);
+    expect(tickerModel.connectionStream.value, TickerConnectionState.stalled);
+
+    connectivityService.setState(ConnectivityState.notConnected);
+
+    // After reconnect delay, it should NOT try to reconnect due to guaranteed missing connection.
+    await Future.delayed((reconnectDelay * 2) + const Duration(milliseconds: 20));
+    expect(tickerService.callCount, 2);
+    expect(tickerModel.connectionStream.value, TickerConnectionState.disconnected);
+  });
+
   test('model doesnt override new data with old', () async {
     await authModel.login();
     await pump();
@@ -149,10 +185,10 @@ void main() {
 
     // Emit new data
     tickerService.addEvent(TickerTickEvent(TickerData(symbol: 'BTC', bid: 50000, ask: 50010, timestamp: 1000)));
-    
+
     // Wait for buffer flush
     await Future.delayed(bufferDuration * 3);
-    
+
     expect(btcStream.value.timestamp, 1000);
 
     // Emit old data
@@ -164,7 +200,7 @@ void main() {
     // Emit even newer data
     tickerService.addEvent(TickerTickEvent(TickerData(symbol: 'BTC', bid: 51000, ask: 51010, timestamp: 1100)));
     await Future.delayed(bufferDuration * 3);
-    
+
     expect(btcStream.value.timestamp, 1100);
   });
 
@@ -180,11 +216,14 @@ void main() {
     await authModel.logout();
     await pump();
 
-    expect(states, containsAllInOrder([
-      TickerConnectionState.connecting,
-      TickerConnectionState.live,
-      TickerConnectionState.disconnected,
-    ]));
+    expect(
+      states,
+      containsAllInOrder([
+        TickerConnectionState.connecting,
+        TickerConnectionState.live,
+        TickerConnectionState.disconnected,
+      ]),
+    );
 
     await subscription.cancel();
   });

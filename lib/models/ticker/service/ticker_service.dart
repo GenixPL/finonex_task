@@ -16,8 +16,6 @@ class TickerService {
   final AuthModel _authModel;
 
   Future<Stream<TickerEvent>> getTickerDataStream({String? lastEventId}) async {
-    print('get stream');
-
     final token = await _authModel.getToken();
     if (token == null) throw Exception('No token available');
 
